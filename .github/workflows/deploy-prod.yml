@@ -1,0 +1,61 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID_PROD }}:role/GitHubActionsRole
+          aws-region: us-east-1
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Deploy Backend
+        working-directory: apps/backend
+        run: |
+          npx serverless deploy \
+            --stage prod \
+            --param="awsAccountId=${{ secrets.AWS_ACCOUNT_ID_PROD }}"
+
+      - name: Deploy Infrastructure
+        run: |
+          cd infra
+          terraform init -backend-config="environments/prod/backend.tf"
+          terraform apply \
+            -var-file="environments/prod/terraform.tfvars" \
+            -auto-approve
+
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_PROD }}
+          payload: |
+            {
+              "text": "Production deployment ${{ job.status }} - ${{ github.ref }}"
+            }

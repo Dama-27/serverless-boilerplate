@@ -1,0 +1,47 @@
+{
+  "name": "@serverless-mern/backend",
+  "version": "1.0.0",
+  "description": "Lambda-based backend for serverless MERN application",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "serverless offline start",
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:staging": "serverless deploy --stage staging",
+    "deploy:prod": "serverless deploy --stage prod",
+    "docker:build": "docker build -f docker/Dockerfile -t serverless-mern-backend:latest ."
+  },
+  "dependencies": {
+    "@serverless-mern/aws-sdk": "workspace:*",
+    "@serverless-mern/logger": "workspace:*",
+    "@serverless-mern/types": "workspace:*",
+    "@serverless-mern/validators": "workspace:*",
+    "aws-lambda": "^1.0.7",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@serverless-mern/aws-sdk": "workspace:*",
+    "@types/aws-lambda": "^8.10.119",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.2",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.5.0",
+    "serverless": "^3.33.0",
+    "serverless-offline": "^13.0.0",
+    "serverless-plugin-tracing": "^2.2.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

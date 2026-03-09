@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./",
+    "paths": {
+      "@monorepo/types": ["packages/types/src/index.ts"],
+      "@monorepo/logger": ["packages/logger/src/index.ts"],
+      "@monorepo/validators": ["packages/validators/src/index.ts"],
+      "@monorepo/aws-sdk": ["packages/aws-sdk/src/index.ts"],
+      "@/*": ["src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "build", "coverage"]
+}

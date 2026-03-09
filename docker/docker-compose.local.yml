@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: dynamodb,s3,sns,sqs,eventbridge,ses,cognito-idp,apigateway
+      DEBUG: 1
+      DATA_DIR: /tmp/localstack/data
+      LAMBDA_EXECUTOR: docker
+    volumes:
+      - ./localstack:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - serverless-mern
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "3001:3000"
+    environment:
+      NODE_ENV: development
+      AWS_REGION: us-east-1
+      LOCALSTACK_ENDPOINT: http://localstack:4566
+      DYNAMODB_USERS_TABLE: users-dev
+      DYNAMODB_ORDERS_TABLE: orders-dev
+      DYNAMODB_NOTIFICATIONS_TABLE: notifications-dev
+      EVENT_BUS_NAME: serverless-mern-dev
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    depends_on:
+      - localstack
+    networks:
+      - serverless-mern
+    volumes:
+      - ../apps/backend/src:/app/src
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "3000:80"
+    environment:
+      REACT_APP_API_URL: http://localhost:3001
+    depends_on:
+      - backend
+    networks:
+      - serverless-mern
+
+networks:
+  serverless-mern:
+    driver: bridge

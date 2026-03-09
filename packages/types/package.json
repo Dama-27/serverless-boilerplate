@@ -1,0 +1,13 @@
+{
+  "name": "@serverless-mern/types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for serverless MERN monorepo",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

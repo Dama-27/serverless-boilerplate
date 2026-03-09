@@ -1,0 +1,44 @@
+{
+  "name": "serverless-mern-monorepo",
+  "version": "1.0.0",
+  "description": "Production-ready Serverless MERN monorepo with TypeScript, AWS Lambda, DynamoDB, and Terraform",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "setup": "npm install && npm run build",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "test:watch": "npm run test:watch --workspaces",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "local-dev": "npm run docker:up && npm run backend:dev",
+    "docker:up": "docker-compose -f docker/docker-compose.local.yml up -d",
+    "docker:down": "docker-compose -f docker/docker-compose.local.yml down",
+    "backend:dev": "cd apps/backend && npm run dev",
+    "frontend:dev": "cd apps/frontend && npm run dev",
+    "deploy:dev": "cd apps/backend && npm run deploy:dev",
+    "deploy:staging": "cd apps/backend && npm run deploy:staging",
+    "deploy:prod": "cd apps/backend && npm run deploy:prod",
+    "terraform:init": "cd infra && terraform init",
+    "terraform:plan": "cd infra && terraform plan",
+    "terraform:apply": "cd infra && terraform apply",
+    "seed-db": "bash scripts/seed-db.sh",
+    "generate-types": "bash scripts/generate-types.sh"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

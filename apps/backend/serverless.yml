@@ -1,0 +1,209 @@
+service: serverless-mern
+
+frameworkVersion: '3'
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_REGION, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    APP_ENVIRONMENT: ${self:provider.stage}
+    LOG_LEVEL: ${env:LOG_LEVEL, 'info'}
+    DYNAMODB_USERS_TABLE: ${self:custom.usersTable}
+    DYNAMODB_ORDERS_TABLE: ${self:custom.ordersTable}
+    DYNAMODB_NOTIFICATIONS_TABLE: ${self:custom.notificationsTable}
+    EVENT_BUS_NAME: ${self:custom.eventBusName}
+    S3_UPLOADS_BUCKET: ${self:custom.uploadsBucket}
+    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID}
+  
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt UsersTable.Arn
+            - !GetAtt OrdersTable.Arn
+            - !GetAtt NotificationsTable.Arn
+        - Effect: Allow
+          Action:
+            - events:PutEvents
+          Resource: !GetAtt EventBus.Arn
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource: !Sub '${UploadsBucket.Arn}/*'
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: '*'
+
+functions:
+  # Users Domain
+  getUser:
+    handler: src/domains/users/handlers/getUser.handler
+    events:
+      - http:
+          path: users/{id}
+          method: get
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            identitySource: method.request.header.Authorization
+
+  createUser:
+    handler: src/domains/users/handlers/createUser.handler
+    events:
+      - http:
+          path: users
+          method: post
+          cors: true
+
+  updateUser:
+    handler: src/domains/users/handlers/updateUser.handler
+    events:
+      - http:
+          path: users/{id}
+          method: put
+          cors: true
+
+  # Orders Domain
+  getOrder:
+    handler: src/domains/orders/handlers/getOrder.handler
+    events:
+      - http:
+          path: orders/{id}
+          method: get
+          cors: true
+
+  createOrder:
+    handler: src/domains/orders/handlers/createOrder.handler
+    events:
+      - http:
+          path: orders
+          method: post
+          cors: true
+
+  # Notifications Domain (Event Handlers)
+  userCreatedEventHandler:
+    handler: src/events/eventHandlers/userCreatedEventHandler.handler
+    events:
+      - eventBridge:
+          eventBus: ${self:custom.eventBusName}
+          pattern:
+            source:
+              - serverless-mern.users
+            detail-type:
+              - user.created
+
+  orderCompletedEventHandler:
+    handler: src/events/eventHandlers/orderCompletedEventHandler.handler
+    events:
+      - eventBridge:
+          eventBus: ${self:custom.eventBusName}
+          pattern:
+            source:
+              - serverless-mern.orders
+            detail-type:
+              - order.completed
+
+custom:
+  usersTable: users-${self:provider.stage}
+  ordersTable: orders-${self:provider.stage}
+  notificationsTable: notifications-${self:provider.stage}
+  eventBusName: serverless-mern-${self:provider.stage}
+  uploadsBucket: serverless-mern-uploads-${self:provider.stage}
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.usersTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: email-index
+            Keys:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+    OrdersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.ordersTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: userId-index
+            Keys:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+    NotificationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.notificationsTable}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: userId-index
+            Keys:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+    EventBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: ${self:custom.eventBusName}
+
+    UploadsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.uploadsBucket}
+        VersioningConfiguration:
+          Status: Enabled
+
+plugins:
+  - serverless-plugin-tracing
+  - serverless-offline
