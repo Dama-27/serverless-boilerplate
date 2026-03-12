@@ -1,3 +1,3 @@
-aws_region       = "us-east-1"
-environment      = "dev"
-api_stage_name   = "dev"
+aws_region  = "us-west-2"
+bucket_name = "boiler-temp-uploads"
+environment = "dev"
