@@ -52,6 +52,15 @@ provider:
           Resource: '*'
 
 functions:
+  # Health Domain
+  healthCheck:
+    handler: src/domains/health/handlers/lambda-health.handler
+    events:
+      - http:
+          path: health
+          method: get
+          cors: true
+
   # Users Domain
   getUser:
     handler: src/domains/users/handlers/getUser.handler
