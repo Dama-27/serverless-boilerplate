@@ -26,24 +26,7 @@ variable "dynamodb_billing_mode" {
   default     = "PAY_PER_REQUEST"
 }
 
-# Lambda
-variable "lambda_memory_size" {
-  description = "Lambda memory size in MB"
-  type        = number
-  default     = 512
-}
 
-variable "lambda_timeout" {
-  description = "Lambda timeout in seconds"
-  type        = number
-  default     = 30
-}
-
-# API Gateway
-variable "api_stage_name" {
-  description = "API Gateway stage name"
-  type        = string
-}
 
 # Cognito
 variable "cognito_mfa_enabled" {

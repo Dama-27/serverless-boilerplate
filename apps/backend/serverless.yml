@@ -32,18 +32,18 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
-            - !GetAtt UsersTable.Arn
-            - !GetAtt OrdersTable.Arn
-            - !GetAtt NotificationsTable.Arn
+            - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:custom.usersTable}'
+            - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:custom.ordersTable}'
+            - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${self:custom.notificationsTable}'
         - Effect: Allow
           Action:
             - events:PutEvents
-          Resource: !GetAtt EventBus.Arn
+          Resource: !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:event-bus/${self:custom.eventBusName}'
         - Effect: Allow
           Action:
             - s3:PutObject
             - s3:GetObject
-          Resource: !Sub '${UploadsBucket.Arn}/*'
+          Resource: !Sub 'arn:aws:s3:::${self:custom.uploadsBucket}/*'
         - Effect: Allow
           Action:
             - logs:CreateLogGroup
@@ -135,83 +135,6 @@ custom:
   notificationsTable: notifications-${self:provider.stage}
   eventBusName: serverless-mern-${self:provider.stage}
   uploadsBucket: serverless-mern-uploads-${self:provider.stage}
-
-resources:
-  Resources:
-    UsersTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.usersTable}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-          - AttributeName: email
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: email-index
-            Keys:
-              - AttributeName: email
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-
-    OrdersTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.ordersTable}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-          - AttributeName: userId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: userId-index
-            Keys:
-              - AttributeName: userId
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-
-    NotificationsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.notificationsTable}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-          - AttributeName: userId
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: userId-index
-            Keys:
-              - AttributeName: userId
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-
-    EventBus:
-      Type: AWS::Events::EventBus
-      Properties:
-        Name: ${self:custom.eventBusName}
-
-    UploadsBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:custom.uploadsBucket}
-        VersioningConfiguration:
-          Status: Enabled
 
 plugins:
   - serverless-plugin-tracing
