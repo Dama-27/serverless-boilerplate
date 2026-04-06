@@ -7,6 +7,7 @@ locals {
     users         = "users-${var.environment}"
     orders        = "orders-${var.environment}"
     notifications = "notifications-${var.environment}"
+    employee      = "employee-${var.environment}"
   }
 
   # Lambda common configuration

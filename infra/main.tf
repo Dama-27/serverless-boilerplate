@@ -11,55 +11,20 @@ provider "aws" {
   }
 }
 
-module "users_table" {
+module "employee" {
   source       = "./modules/dynamodb"
-  table_name   = local.dynamodb_tables.users
+  table_name   = local.dynamodb_tables.employee
   billing_mode = var.dynamodb_billing_mode
-  hash_key     = "id"
+  hash_key     = "employee_id"
+  range_key    = "join_date"
   attributes = [
-    { name = "id", type = "S" },
-    { name = "email", type = "S" }
+    { name = "employee_id", type = "S" },
+    { name = "join_date", type = "S" }
   ]
   gsI = [
     {
-      name            = "email-index"
-      hash_key        = "email"
-      projection_type = "ALL"
-    }
-  ]
-}
-
-module "orders_table" {
-  source       = "./modules/dynamodb"
-  table_name   = local.dynamodb_tables.orders
-  billing_mode = var.dynamodb_billing_mode
-  hash_key     = "id"
-  attributes = [
-    { name = "id", type = "S" },
-    { name = "userId", type = "S" }
-  ]
-  gsI = [
-    {
-      name            = "userId-index"
-      hash_key        = "userId"
-      projection_type = "ALL"
-    }
-  ]
-}
-
-module "notifications_table" {
-  source       = "./modules/dynamodb"
-  table_name   = local.dynamodb_tables.notifications
-  billing_mode = var.dynamodb_billing_mode
-  hash_key     = "id"
-  attributes = [
-    { name = "id", type = "S" },
-    { name = "userId", type = "S" }
-  ]
-  gsI = [
-    {
-      name            = "userId-index"
-      hash_key        = "userId"
+      name            = "join_date-index"
+      hash_key        = "join_date"
       projection_type = "ALL"
     }
   ]
