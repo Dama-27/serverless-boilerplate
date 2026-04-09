@@ -41,3 +41,14 @@ module "uploads_bucket" {
   environment = var.environment
   versioning_enabled = true
 }
+
+module "lambda_health" {
+  source            = "./modules/lambda_api"
+  function_name     = "${var.project_name}-health-${var.environment}"
+  environment       = var.environment
+  handler           = "domains/health/handlers/lambda-health.handler.handler"
+  source_dir        = "${path.module}/../apps/backend/dist"
+  build_command     = "yarn build"
+  build_working_dir = "${path.module}/../apps/backend"
+  api_path          = "/health"
+}

@@ -34,3 +34,21 @@ variable "cognito_mfa_enabled" {
   type        = bool
   default     = false
 }
+
+variable "lambda_memory_size" {
+  description = "Memory size for Lambdas"
+  type        = number
+  default     = 256
+}
+
+variable "lambda_timeout" {
+  description = "Timeout for Lambdas in seconds"
+  type        = number
+  default     = 30
+}
+
+variable "api_stage_name" {
+  description = "API Gateway stage name"
+  type        = string
+  default     = "dev"
+}
