@@ -16,7 +16,7 @@ variable "runtime" {
 }
 
 variable "source_dir" {
-  description = "Path to the directory containing the lambda source code (e.g. dist folder)"
+  description = "Path to the directory containing the lambda source code"
   type        = string
 }
 
@@ -32,14 +32,26 @@ variable "build_working_dir" {
   default     = ""
 }
 
-variable "api_path" {
-  description = "API Gateway route path"
-  type        = string
-  default     = "/health"
-}
-
 variable "environment" {
   description = "Environment name"
   type        = string
   default     = "dev"
+}
+
+variable "api_id" {
+  description = "API Gateway ID (optional, required if api_path is set)"
+  type        = string
+  default     = ""
+}
+
+variable "api_execution_arn" {
+  description = "API Gateway Execution ARN (optional, required if api_path is set)"
+  type        = string
+  default     = ""
+}
+
+variable "api_path" {
+  description = "API Gateway route path (optional, if provided maps route to lambda)"
+  type        = string
+  default     = ""
 }

@@ -56,3 +56,31 @@ resource "aws_lambda_function" "this" {
     aws_iam_role_policy_attachment.lambda_policy
   ]
 }
+
+# ------------------------------------------------------------------------------
+# API Gateway Integration (deployed only if api_id and api_path are provided)
+# ------------------------------------------------------------------------------
+
+resource "aws_apigatewayv2_integration" "lambda" {
+  count              = var.api_id != "" && var.api_path != "" ? 1 : 0
+  api_id             = var.api_id
+  integration_type   = "AWS_PROXY"
+  integration_uri    = aws_lambda_function.this.invoke_arn
+  integration_method = "POST"
+}
+
+resource "aws_apigatewayv2_route" "this" {
+  count     = var.api_id != "" && var.api_path != "" ? 1 : 0
+  api_id    = var.api_id
+  route_key = "GET ${var.api_path}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda[0].id}"
+}
+
+resource "aws_lambda_permission" "api_gw" {
+  count         = var.api_execution_arn != "" && var.api_path != "" ? 1 : 0
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.this.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${var.api_execution_arn}/*/*"
+}

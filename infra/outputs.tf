@@ -14,7 +14,8 @@ output "s3_uploads_bucket" {
   value       = module.uploads_bucket.bucket_name
 }
 
-output "lambda_health_api_url" {
-  description = "The HTTP API Gateway endpoint for lambda health function"
-  value       = module.lambda_health.api_endpoint
+output "api_gateway_url" {
+  description = "The HTTP API Gateway endpoint for the API"
+  value       = module.api_gateway.api_endpoint
 }
+

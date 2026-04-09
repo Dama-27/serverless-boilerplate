@@ -42,13 +42,23 @@ module "uploads_bucket" {
   versioning_enabled = true
 }
 
+module "api_gateway" {
+  source      = "./modules/api_gateway"
+  api_name    = "${var.project_name}-api-${var.environment}"
+  environment = var.environment
+}
+
 module "lambda_health" {
-  source            = "./modules/lambda_api"
+  source            = "./modules/lambda"
   function_name     = "${var.project_name}-health-${var.environment}"
   environment       = var.environment
   handler           = "domains/health/handlers/lambda-health.handler.handler"
   source_dir        = "${path.module}/../apps/backend/dist"
   build_command     = "yarn build"
   build_working_dir = "${path.module}/../apps/backend"
+  
+  api_id            = module.api_gateway.api_id
+  api_execution_arn = module.api_gateway.execution_arn
   api_path          = "/health"
 }
+
