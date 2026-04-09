@@ -1,4 +1,4 @@
-variable "api_name" {
+variable "name" {
   description = "Name of the API Gateway"
   type        = string
 }
@@ -6,5 +6,10 @@ variable "api_name" {
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "dev"
+}
+
+variable "cognito_user_pool_arn" {
+  description = "Optional Cognito User Pool ARN for authorizer"
+  type        = string
+  default     = ""
 }

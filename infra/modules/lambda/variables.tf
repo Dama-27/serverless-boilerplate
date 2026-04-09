@@ -38,20 +38,38 @@ variable "environment" {
   default     = "dev"
 }
 
-variable "api_id" {
-  description = "API Gateway ID (optional, required if api_path is set)"
+variable "rest_api_id" {
+  description = "REST API Gateway ID (optional)"
   type        = string
   default     = ""
 }
 
-variable "api_execution_arn" {
-  description = "API Gateway Execution ARN (optional, required if api_path is set)"
+variable "rest_api_root_resource_id" {
+  description = "REST API Gateway Root Resource ID (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "rest_api_execution_arn" {
+  description = "REST API Gateway Execution ARN (optional)"
   type        = string
   default     = ""
 }
 
 variable "api_path" {
-  description = "API Gateway route path (optional, if provided maps route to lambda)"
+  description = "REST API path part (e.g. 'health')"
+  type        = string
+  default     = ""
+}
+
+variable "http_method" {
+  description = "REST API HTTP method"
+  type        = string
+  default     = "GET"
+}
+
+variable "authorizer_id" {
+  description = "Optional API Gateway Authorizer ID"
   type        = string
   default     = ""
 }

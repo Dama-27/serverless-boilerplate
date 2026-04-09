@@ -1,43 +1,3 @@
-resource "null_resource" "build" {
-  count = var.build_command != "" ? 1 : 0
-
-  triggers = {
-    always_run = timestamp()
-  }
-
-  provisioner "local-exec" {
-    command     = var.build_command
-    working_dir = var.build_working_dir != "" ? var.build_working_dir : path.module
-  }
-}
-
-data "archive_file" "lambda_zip" {
-  depends_on  = [null_resource.build]
-  type        = "zip"
-  source_dir  = var.source_dir
-  output_path = "${path.module}/.terraform/archive/${var.function_name}.zip"
-}
-
-resource "aws_iam_role" "lambda_exec" {
-  name = "${var.function_name}-exec-role-${var.environment}"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      }
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_policy" {
-  role       = aws_iam_role.lambda_exec.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
 resource "aws_lambda_function" "this" {
   function_name    = var.function_name
   role             = aws_iam_role.lambda_exec.arn
@@ -53,34 +13,47 @@ resource "aws_lambda_function" "this" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.lambda_policy
+    aws_iam_role_policy_attachment.lambda_basic_execution,
+    aws_cloudwatch_log_group.lambda_log
   ]
 }
 
 # ------------------------------------------------------------------------------
-# API Gateway Integration (deployed only if api_id and api_path are provided)
+# API Gateway Integration (REST API) 
+# Deployed only if rest_api_id and api_path are provided
 # ------------------------------------------------------------------------------
 
-resource "aws_apigatewayv2_integration" "lambda" {
-  count              = var.api_id != "" && var.api_path != "" ? 1 : 0
-  api_id             = var.api_id
-  integration_type   = "AWS_PROXY"
-  integration_uri    = aws_lambda_function.this.invoke_arn
-  integration_method = "POST"
+resource "aws_api_gateway_resource" "this" {
+  count       = var.rest_api_id != "" && var.api_path != "" ? 1 : 0
+  rest_api_id = var.rest_api_id
+  parent_id   = var.rest_api_root_resource_id
+  path_part   = var.api_path
 }
 
-resource "aws_apigatewayv2_route" "this" {
-  count     = var.api_id != "" && var.api_path != "" ? 1 : 0
-  api_id    = var.api_id
-  route_key = "GET ${var.api_path}"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda[0].id}"
+resource "aws_api_gateway_method" "this" {
+  count         = var.rest_api_id != "" && var.api_path != "" ? 1 : 0
+  rest_api_id   = var.rest_api_id
+  resource_id   = aws_api_gateway_resource.this[0].id
+  http_method   = var.http_method
+  authorization = var.authorizer_id != "" ? "COGNITO_USER_POOLS" : "NONE"
+  authorizer_id = var.authorizer_id != "" ? var.authorizer_id : null
+}
+
+resource "aws_api_gateway_integration" "this" {
+  count                   = var.rest_api_id != "" && var.api_path != "" ? 1 : 0
+  rest_api_id             = var.rest_api_id
+  resource_id             = aws_api_gateway_resource.this[0].id
+  http_method             = aws_api_gateway_method.this[0].http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.this.invoke_arn
 }
 
 resource "aws_lambda_permission" "api_gw" {
-  count         = var.api_execution_arn != "" && var.api_path != "" ? 1 : 0
+  count         = var.rest_api_execution_arn != "" && var.api_path != "" ? 1 : 0
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.this.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${var.api_execution_arn}/*/*"
+  source_arn    = "${var.rest_api_execution_arn}/*/${var.http_method}/${var.api_path}"
 }

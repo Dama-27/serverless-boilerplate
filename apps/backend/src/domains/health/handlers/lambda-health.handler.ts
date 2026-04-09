@@ -5,9 +5,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     return {
       statusCode: 200,
       body: JSON.stringify({
-        status: 'passed',
-        timestamp: new Date().toISOString(),
-        message: 'Health check passed'
+        message: 'Lambda is working'
       })
     };
   } catch (error) {
