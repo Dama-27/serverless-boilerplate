@@ -1,6 +1,6 @@
 output "api_gateway_url" {
   description = "The REST API Gateway endpoint URL"
-  value       = module.api_gateway.api_endpoint
+  value       = aws_api_gateway_stage.api_stage.invoke_url
 }
 
 output "lambda_health_arn" {

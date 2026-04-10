@@ -54,7 +54,7 @@ module "lambda_health" {
   handler           = "domains/health/handlers/lambda-health.handler.handler"
   
   source_dir        = "${path.module}/../../../apps/backend/dist"
-  build_command     = "yarn build"
+  build_command     = ""
   build_working_dir = "${path.module}/../../../apps/backend"
   
   rest_api_id               = module.api_gateway.api_id
@@ -63,3 +63,26 @@ module "lambda_health" {
   api_path                  = "health"
   http_method               = "GET"
 }
+
+resource "aws_api_gateway_deployment" "api_deployment" {
+  rest_api_id = module.api_gateway.api_id
+
+  triggers = {
+    redeployment = timestamp()
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  depends_on = [
+    module.lambda_health
+  ]
+}
+
+resource "aws_api_gateway_stage" "api_stage" {
+  deployment_id = aws_api_gateway_deployment.api_deployment.id
+  rest_api_id   = module.api_gateway.api_id
+  stage_name    = var.environment
+}
+

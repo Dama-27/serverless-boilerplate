@@ -24,14 +24,14 @@ resource "aws_lambda_function" "this" {
 # ------------------------------------------------------------------------------
 
 resource "aws_api_gateway_resource" "this" {
-  count       = var.rest_api_id != "" && var.api_path != "" ? 1 : 0
+  count       = var.api_path != "" ? 1 : 0
   rest_api_id = var.rest_api_id
   parent_id   = var.rest_api_root_resource_id
   path_part   = var.api_path
 }
 
 resource "aws_api_gateway_method" "this" {
-  count         = var.rest_api_id != "" && var.api_path != "" ? 1 : 0
+  count         = var.api_path != "" ? 1 : 0
   rest_api_id   = var.rest_api_id
   resource_id   = aws_api_gateway_resource.this[0].id
   http_method   = var.http_method
@@ -40,7 +40,7 @@ resource "aws_api_gateway_method" "this" {
 }
 
 resource "aws_api_gateway_integration" "this" {
-  count                   = var.rest_api_id != "" && var.api_path != "" ? 1 : 0
+  count                   = var.api_path != "" ? 1 : 0
   rest_api_id             = var.rest_api_id
   resource_id             = aws_api_gateway_resource.this[0].id
   http_method             = aws_api_gateway_method.this[0].http_method
@@ -50,7 +50,7 @@ resource "aws_api_gateway_integration" "this" {
 }
 
 resource "aws_lambda_permission" "api_gw" {
-  count         = var.rest_api_execution_arn != "" && var.api_path != "" ? 1 : 0
+  count         = var.api_path != "" ? 1 : 0
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.this.function_name
